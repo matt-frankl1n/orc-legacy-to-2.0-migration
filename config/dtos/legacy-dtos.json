@@ -1,0 +1,107 @@
+{
+  "event": {
+    "required": ["eventName", "displayName"],
+    "optional": ["description", "startDate", "endDate", "location", "organizerName", "status"],
+    "mappings": {
+      "eventName": "name",
+      "displayName": "displayName",
+      "description": "description",
+      "startDate": "startDateTime",
+      "endDate": "endDateTime",
+      "location": "venue",
+      "organizerName": "organizer",
+      "status": "status"
+    }
+  },
+  "room": {
+    "required": ["id", "name", "eventName"],
+    "optional": ["description", "location", "capacity", "custom1", "custom2", "custom3", "tags"],
+    "mappings": {
+      "id": "legacyId",
+      "name": "name",
+      "description": "description",
+      "location": "locationName",
+      "capacity": "maxCapacity",
+      "custom1": "tags.category",
+      "custom2": "tags.type",
+      "custom3": "tags.level",
+      "tags": "tags.additional"
+    }
+  },
+  "session": {
+    "required": ["id", "roomId", "title", "startTime", "endTime"],
+    "optional": ["description", "presenter", "moderator", "tags", "custom1", "custom2", "status"],
+    "mappings": {
+      "id": "legacyId",
+      "roomId": "roomId",
+      "title": "title",
+      "description": "description",
+      "startTime": "startDateTime",
+      "endTime": "endDateTime",
+      "presenter": "presenter.name",
+      "moderator": "moderator.name",
+      "tags": "tags",
+      "custom1": "metadata.category",
+      "custom2": "metadata.type",
+      "status": "status"
+    }
+  },
+  "subSession": {
+    "required": ["id", "sessionId", "title", "startTime", "endTime"],
+    "optional": ["description", "presenter", "tags", "status"],
+    "mappings": {
+      "id": "legacyId",
+      "sessionId": "parentSessionId",
+      "title": "title",
+      "description": "description",
+      "startTime": "startDateTime",
+      "endTime": "endDateTime",
+      "presenter": "presenter.name",
+      "tags": "tags",
+      "status": "status"
+    }
+  },
+  "user": {
+    "required": ["id", "email", "firstName", "lastName"],
+    "optional": ["company", "title", "phone", "tags", "custom1", "custom2"],
+    "mappings": {
+      "id": "legacyId",
+      "email": "email",
+      "firstName": "firstName",
+      "lastName": "lastName",
+      "company": "company",
+      "title": "jobTitle",
+      "phone": "phoneNumber",
+      "tags": "tags",
+      "custom1": "metadata.department",
+      "custom2": "metadata.role"
+    }
+  },
+  "moderator": {
+    "required": ["id", "userId", "roomId"],
+    "optional": ["role", "permissions", "tags"],
+    "mappings": {
+      "id": "legacyId",
+      "userId": "userId",
+      "roomId": "roomId",
+      "role": "role",
+      "permissions": "permissions",
+      "tags": "tags"
+    }
+  },
+  "file": {
+    "required": ["id", "fileName", "fileSize", "fileType"],
+    "optional": ["description", "uploadDate", "tags", "custom1", "custom2"],
+    "mappings": {
+      "id": "legacyId",
+      "fileName": "originalFileName",
+      "fileSize": "fileSizeBytes",
+      "fileType": "mimeType",
+      "description": "description",
+      "uploadDate": "uploadDateTime",
+      "tags": "tags",
+      "custom1": "metadata.category",
+      "custom2": "metadata.type"
+    }
+  }
+}

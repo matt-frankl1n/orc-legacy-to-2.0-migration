@@ -1,0 +1,241 @@
+{
+  "event": {
+    "create": {
+      "required": ["name", "displayName"],
+      "optional": ["description", "startDateTime", "endDateTime", "venue", "organizer", "status"],
+      "validation": {
+        "name": { "maxLength": 100, "pattern": "^[a-zA-Z0-9_-]+$" },
+        "displayName": { "maxLength": 255 },
+        "description": { "maxLength": 1000 },
+        "startDateTime": { "type": "datetime" },
+        "endDateTime": { "type": "datetime" },
+        "venue": { "maxLength": 255 },
+        "organizer": { "maxLength": 255 },
+        "status": { "enum": ["draft", "active", "completed", "cancelled"] }
+      }
+    },
+    "update": {
+      "required": ["id"],
+      "optional": ["name", "displayName", "description", "startDateTime", "endDateTime", "venue", "organizer", "status"],
+      "validation": {
+        "id": { "type": "number" },
+        "name": { "maxLength": 100, "pattern": "^[a-zA-Z0-9_-]+$" },
+        "displayName": { "maxLength": 255 },
+        "description": { "maxLength": 1000 },
+        "startDateTime": { "type": "datetime" },
+        "endDateTime": { "type": "datetime" },
+        "venue": { "maxLength": 255 },
+        "organizer": { "maxLength": 255 },
+        "status": { "enum": ["draft", "active", "completed", "cancelled"] }
+      }
+    }
+  },
+  "room": {
+    "create": {
+      "required": ["eventId", "name"],
+      "optional": ["description", "locationName", "maxCapacity", "tags"],
+      "validation": {
+        "eventId": { "type": "number" },
+        "name": { "maxLength": 255 },
+        "description": { "maxLength": 1000 },
+        "locationName": { "maxLength": 255 },
+        "maxCapacity": { "type": "number", "min": 1 },
+        "tags": { "type": "object" }
+      }
+    },
+    "update": {
+      "required": ["id"],
+      "optional": ["name", "description", "locationName", "maxCapacity", "tags"],
+      "validation": {
+        "id": { "type": "number" },
+        "name": { "maxLength": 255 },
+        "description": { "maxLength": 1000 },
+        "locationName": { "maxLength": 255 },
+        "maxCapacity": { "type": "number", "min": 1 },
+        "tags": { "type": "object" }
+      }
+    }
+  },
+  "session": {
+    "create": {
+      "required": ["eventId", "roomId", "title", "startDateTime", "endDateTime"],
+      "optional": ["description", "presenter", "moderator", "tags", "metadata", "status"],
+      "validation": {
+        "eventId": { "type": "number" },
+        "roomId": { "type": "number" },
+        "title": { "maxLength": 255 },
+        "description": { "maxLength": 1000 },
+        "startDateTime": { "type": "datetime" },
+        "endDateTime": { "type": "datetime" },
+        "presenter": { "type": "object" },
+        "moderator": { "type": "object" },
+        "tags": { "type": "array" },
+        "metadata": { "type": "object" },
+        "status": { "enum": ["scheduled", "in_progress", "completed", "cancelled"] }
+      }
+    },
+    "update": {
+      "required": ["id"],
+      "optional": ["title", "description", "startDateTime", "endDateTime", "presenter", "moderator", "tags", "metadata", "status"],
+      "validation": {
+        "id": { "type": "number" },
+        "title": { "maxLength": 255 },
+        "description": { "maxLength": 1000 },
+        "startDateTime": { "type": "datetime" },
+        "endDateTime": { "type": "datetime" },
+        "presenter": { "type": "object" },
+        "moderator": { "type": "object" },
+        "tags": { "type": "array" },
+        "metadata": { "type": "object" },
+        "status": { "enum": ["scheduled", "in_progress", "completed", "cancelled"] }
+      }
+    }
+  },
+  "subSession": {
+    "create": {
+      "required": ["eventId", "parentSessionId", "title", "startDateTime", "endDateTime"],
+      "optional": ["description", "presenter", "tags", "status"],
+      "validation": {
+        "eventId": { "type": "number" },
+        "parentSessionId": { "type": "number" },
+        "title": { "maxLength": 255 },
+        "description": { "maxLength": 1000 },
+        "startDateTime": { "type": "datetime" },
+        "endDateTime": { "type": "datetime" },
+        "presenter": { "type": "object" },
+        "tags": { "type": "array" },
+        "status": { "enum": ["scheduled", "in_progress", "completed", "cancelled"] }
+      }
+    },
+    "update": {
+      "required": ["id"],
+      "optional": ["title", "description", "startDateTime", "endDateTime", "presenter", "tags", "status"],
+      "validation": {
+        "id": { "type": "number" },
+        "title": { "maxLength": 255 },
+        "description": { "maxLength": 1000 },
+        "startDateTime": { "type": "datetime" },
+        "endDateTime": { "type": "datetime" },
+        "presenter": { "type": "object" },
+        "tags": { "type": "array" },
+        "status": { "enum": ["scheduled", "in_progress", "completed", "cancelled"] }
+      }
+    }
+  },
+  "user": {
+    "create": {
+      "required": ["eventId", "email", "firstName", "lastName"],
+      "optional": ["company", "jobTitle", "phoneNumber", "tags", "metadata"],
+      "validation": {
+        "eventId": { "type": "number" },
+        "email": { "type": "email", "maxLength": 255 },
+        "firstName": { "maxLength": 100 },
+        "lastName": { "maxLength": 100 },
+        "company": { "maxLength": 255 },
+        "jobTitle": { "maxLength": 255 },
+        "phoneNumber": { "maxLength": 20 },
+        "tags": { "type": "array" },
+        "metadata": { "type": "object" }
+      }
+    },
+    "update": {
+      "required": ["id"],
+      "optional": ["email", "firstName", "lastName", "company", "jobTitle", "phoneNumber", "tags", "metadata"],
+      "validation": {
+        "id": { "type": "number" },
+        "email": { "type": "email", "maxLength": 255 },
+        "firstName": { "maxLength": 100 },
+        "lastName": { "maxLength": 100 },
+        "company": { "maxLength": 255 },
+        "jobTitle": { "maxLength": 255 },
+        "phoneNumber": { "maxLength": 20 },
+        "tags": { "type": "array" },
+        "metadata": { "type": "object" }
+      }
+    }
+  },
+  "moderator": {
+    "create": {
+      "required": ["eventId", "userId", "roomId"],
+      "optional": ["role", "permissions", "tags"],
+      "validation": {
+        "eventId": { "type": "number" },
+        "userId": { "type": "number" },
+        "roomId": { "type": "number" },
+        "role": { "enum": ["moderator", "presenter", "admin"] },
+        "permissions": { "type": "array" },
+        "tags": { "type": "array" }
+      }
+    },
+    "update": {
+      "required": ["id"],
+      "optional": ["role", "permissions", "tags"],
+      "validation": {
+        "id": { "type": "number" },
+        "role": { "enum": ["moderator", "presenter", "admin"] },
+        "permissions": { "type": "array" },
+        "tags": { "type": "array" }
+      }
+    }
+  },
+  "sessionFile": {
+    "create": {
+      "required": ["sessionId", "originalFileName", "fileSizeBytes", "mimeType"],
+      "optional": ["description", "tags", "metadata"],
+      "validation": {
+        "sessionId": { "type": "number" },
+        "originalFileName": { "maxLength": 255 },
+        "fileSizeBytes": { "type": "number", "min": 1 },
+        "mimeType": { "maxLength": 100 },
+        "description": { "maxLength": 1000 },
+        "tags": { "type": "array" },
+        "metadata": { "type": "object" }
+      }
+    }
+  },
+  "subSessionFile": {
+    "create": {
+      "required": ["subSessionId", "originalFileName", "fileSizeBytes", "mimeType"],
+      "optional": ["description", "tags", "metadata"],
+      "validation": {
+        "subSessionId": { "type": "number" },
+        "originalFileName": { "maxLength": 255 },
+        "fileSizeBytes": { "type": "number", "min": 1 },
+        "mimeType": { "maxLength": 100 },
+        "description": { "maxLength": 1000 },
+        "tags": { "type": "array" },
+        "metadata": { "type": "object" }
+      }
+    }
+  },
+  "userFile": {
+    "create": {
+      "required": ["userId", "originalFileName", "fileSizeBytes", "mimeType"],
+      "optional": ["description", "tags", "metadata"],
+      "validation": {
+        "userId": { "type": "number" },
+        "originalFileName": { "maxLength": 255 },
+        "fileSizeBytes": { "type": "number", "min": 1 },
+        "mimeType": { "maxLength": 100 },
+        "description": { "maxLength": 1000 },
+        "tags": { "type": "array" },
+        "metadata": { "type": "object" }
+      }
+    }
+  },
+  "moderatorFile": {
+    "create": {
+      "required": ["moderatorId", "originalFileName", "fileSizeBytes", "mimeType"],
+      "optional": ["description", "tags", "metadata"],
+      "validation": {
+        "moderatorId": { "type": "number" },
+        "originalFileName": { "maxLength": 255 },
+        "fileSizeBytes": { "type": "number", "min": 1 },
+        "mimeType": { "maxLength": 100 },
+        "description": { "maxLength": 1000 },
+        "tags": { "type": "array" },
+        "metadata": { "type": "object" }
+      }
+    }
+  }
+}
