@@ -16,33 +16,65 @@ export class ValidationService {
   /**
    * Transform legacy room data to current system format
    */
-  async transformLegacyRoom(legacyRoom, targetEventId) {
+  async transformLegacyRoom(legacyRoom, targetEventId, eventLocationId = null) {
     try {
-      this.logger.debug(`Transforming legacy room: ${legacyRoom.name}`);
+      // Normalize room name from different possible field names
+      const roomName = legacyRoom.RoomName || legacyRoom.name || legacyRoom.roomName || legacyRoom.Name || legacyRoom.DisplayName;
+      
+      if (!roomName) {
+        throw new Error('Room name is required but not found in legacy data');
+      }
+      
+      this.logger.debug(`Transforming legacy room: ${roomName}`);
       
       // Get DTO mappings
       const legacyMapping = this.legacyDTOs.room;
       const currentMapping = this.currentDTOs.room.create;
       
-      // Transform data
+      // Use the provided eventLocationId or fall back to the legacy room's EventLocationId or targetEventId
+      const finalEventLocationId = eventLocationId || legacyRoom.EventLocationId || targetEventId;
+      
+      // Transform data - only include fields that have values
       const transformedRoom = {
-        eventId: targetEventId,
-        name: legacyRoom.name,
-        description: legacyRoom.description || null,
-        locationName: legacyRoom.location || null,
-        maxCapacity: legacyRoom.capacity || null,
-        tags: this.transformTags(legacyRoom),
-        legacyId: legacyRoom.id
+        eventLocationId: finalEventLocationId,
+        name: roomName,
+        displayName: roomName  // Use room name as display name by default
       };
+      
+      // Add optional fields only if they have values
+      const description = legacyRoom.description || legacyRoom.Description;
+      if (description) {
+        transformedRoom.description = description;
+      }
+      
+      const capacity = legacyRoom.capacity || legacyRoom.Capacity || legacyRoom.maxCapacity || legacyRoom.MaxCapacity;
+      if (capacity) {
+        transformedRoom.capacity = parseInt(capacity, 10);
+      }
+      
+      const tags = this.transformTags(legacyRoom);
+      if (tags) {
+        transformedRoom.tags = tags;
+      }
+      
+      // Store legacy ID for reference but don't include in validation
+      const legacyId = legacyRoom.id || legacyRoom.Id || legacyRoom.RoomId;
       
       // Validate transformed data
       await this.validateCurrentSystemData('room', 'create', transformedRoom);
       
-      this.logger.debug(`Successfully transformed room: ${legacyRoom.name}`);
+      // Add eventId after validation for URL construction
+      transformedRoom.eventId = targetEventId;
+      
+      // Add legacyId after validation
+      transformedRoom.legacyId = legacyId;
+      
+      this.logger.debug(`Successfully transformed room: ${roomName}`);
       return transformedRoom;
       
     } catch (error) {
-      this.logger.error(`Failed to transform legacy room: ${legacyRoom.name}`, error);
+      const roomName = legacyRoom.RoomName || legacyRoom.name || legacyRoom.roomName || legacyRoom.Name || legacyRoom.DisplayName || 'UNKNOWN';
+      this.logger.error(`Failed to transform legacy room: ${roomName}`, error);
       throw new Error(`Room transformation failed: ${error.message}`);
     }
   }
@@ -54,20 +86,15 @@ export class ValidationService {
     try {
       this.logger.debug(`Transforming legacy session: ${legacySession.title}`);
       
-      // Transform data
+      // Transform data using current system field names
       const transformedSession = {
         eventId: targetEventId,
         roomId: roomId,
-        title: legacySession.title,
-        description: legacySession.description || null,
-        startDateTime: this.transformDateTime(legacySession.startTime),
-        endDateTime: this.transformDateTime(legacySession.endTime),
-        presenter: this.transformPresenter(legacySession.presenter),
-        moderator: this.transformModerator(legacySession.moderator),
-        tags: this.transformSessionTags(legacySession),
-        metadata: this.transformSessionMetadata(legacySession),
-        status: this.transformSessionStatus(legacySession.status),
-        legacyId: legacySession.id
+        sourceSystemId: legacySession.ClientSessionId || legacySession.clientSessionId || legacySession.SessionId || legacySession.sessionId || legacySession.id || `legacy-${Date.now()}`,
+        name: legacySession.SessionName || legacySession.sessionName || legacySession.title || 'Untitled Session',
+        description: legacySession.Description || legacySession.description || null,
+        startsAt: this.transformDateTime(legacySession.SessionStart || legacySession.sessionStart || legacySession.startTime),
+        endsAt: this.transformDateTime(legacySession.SessionEnd || legacySession.sessionEnd || legacySession.endTime)
       };
       
       // Validate transformed data
@@ -89,18 +116,15 @@ export class ValidationService {
     try {
       this.logger.debug(`Transforming legacy subsession: ${legacySubSession.title}`);
       
-      // Transform data
+      // Transform data using current system field names
       const transformedSubSession = {
-        eventId: targetEventId,
-        parentSessionId: sessionId,
-        title: legacySubSession.title,
+        sessionId: sessionId,
+        sourceSystemId: legacySubSession.ClientSubSessionId || legacySubSession.clientSubSessionId || legacySubSession.SubSessionId || legacySubSession.subSessionId || legacySubSession.id || `legacy-${Date.now()}`,
+        name: legacySubSession.subSessionName || legacySubSession.title || 'Untitled SubSession',
         description: legacySubSession.description || null,
-        startDateTime: this.transformDateTime(legacySubSession.startTime),
-        endDateTime: this.transformDateTime(legacySubSession.endTime),
-        presenter: this.transformPresenter(legacySubSession.presenter),
-        tags: this.transformSessionTags(legacySubSession),
-        status: this.transformSessionStatus(legacySubSession.status),
-        legacyId: legacySubSession.id
+        startsAt: this.transformDateTime(legacySubSession.startTime),
+        endsAt: this.transformDateTime(legacySubSession.endTime),
+        order: legacySubSession.order || legacySubSession.subSessionOrder || 1
       };
       
       // Validate transformed data
@@ -366,10 +390,17 @@ export class ValidationService {
    * Transform datetime string
    */
   transformDateTime(dateTimeString) {
-    if (!dateTimeString) return null;
+    if (!dateTimeString) {
+      this.logger.warn(`Missing datetime value, this should not happen`);
+      return null;
+    }
     
     try {
       const date = new Date(dateTimeString);
+      if (isNaN(date.getTime())) {
+        this.logger.warn(`Invalid datetime: ${dateTimeString}`);
+        return null;
+      }
       return date.toISOString();
     } catch (error) {
       this.logger.warn(`Failed to parse datetime: ${dateTimeString}`);
@@ -521,13 +552,13 @@ export class ValidationService {
     
     // Add required fields
     dtoConfig.required.forEach(field => {
-      schemaObj[field] = Joi.required();
+      schemaObj[field] = Joi.any().required();
     });
     
     // Add optional fields
     if (dtoConfig.optional) {
       dtoConfig.optional.forEach(field => {
-        schemaObj[field] = Joi.optional();
+        schemaObj[field] = Joi.any().optional();
       });
     }
     
@@ -535,7 +566,8 @@ export class ValidationService {
     if (dtoConfig.validation) {
       Object.entries(dtoConfig.validation).forEach(([field, rules]) => {
         if (schemaObj[field]) {
-          schemaObj[field] = this.applyValidationRules(schemaObj[field], rules);
+          const isOptional = dtoConfig.optional && dtoConfig.optional.includes(field);
+          schemaObj[field] = this.applyValidationRules(schemaObj[field], rules, isOptional);
         }
       });
     }
@@ -546,12 +578,13 @@ export class ValidationService {
   /**
    * Apply validation rules to Joi field
    */
-  applyValidationRules(joiField, rules) {
+  applyValidationRules(joiField, rules, isOptional = false) {
     let field = joiField;
     
     if (rules.type) {
       switch (rules.type) {
         case 'number':
+        case 'integer':
           field = Joi.number();
           break;
         case 'email':
@@ -571,6 +604,21 @@ export class ValidationService {
       }
     }
     
+    // If we have length-based rules but no explicit type, default to string
+    if ((rules.maxLength || rules.minLength) && !rules.type) {
+      field = Joi.string();
+    }
+    
+    // If we have numeric rules but no explicit type, default to number
+    if ((rules.min !== undefined || rules.max !== undefined) && !rules.type && !rules.maxLength && !rules.minLength) {
+      field = Joi.number();
+    }
+    
+    // If we have pattern rules but no explicit type, default to string
+    if (rules.pattern && !rules.type) {
+      field = Joi.string();
+    }
+    
     if (rules.maxLength) {
       field = field.max(rules.maxLength);
     }
@@ -587,14 +635,24 @@ export class ValidationService {
       field = field.max(rules.max);
     }
     
-    if (rules.pattern) {
+    if (rules.pattern && (rules.type === 'string' || !rules.type)) {
       field = field.pattern(new RegExp(rules.pattern));
     }
     
     if (rules.enum) {
       field = field.valid(...rules.enum);
     }
+
+    // Handle nullable fields
+    if (rules.nullable) {
+      field = field.allow(null);
+    }
     
+    // If field is optional, make it optional again and allow null
+    if (isOptional) {
+      field = field.optional().allow(null);
+    }
+
     return field;
   }
 

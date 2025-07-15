@@ -1,0 +1,395 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Event V1",
+    "description": "This project is designed for **event management** and provides comprehensive tools for configuring and managing various aspects of presentations. It allows users to easily manage key components such as **speakers**, **moderators**, and **speaker-ready rooms**, ensuring smooth coordination and execution of events. The system supports the presentation of various media formats, including **PowerPoint presentations**, **VLC media player streams**, and more, enabling a flexible and interactive environment for event organizers and participants.",
+    "version": "v1"
+  },
+  "servers": [
+    {
+      "url": "/event-api"
+    }
+  ],
+  "paths": {
+    "/Events/{eventId}/Rooms": {
+      "get": {
+        "tags": [
+          "Rooms"
+        ],
+        "summary": "Retrieves all rooms.",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoomDtoIEnumerableResult"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Rooms"
+        ],
+        "summary": "Creates a new room.",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "The details of the room to create.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRoomDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateRoomDtoResult"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateRoomDtoResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Events/{eventId}/Sessions": {
+      "get": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "Get the list of sessions matching the provided filter criteria",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionDtoIEnumerableResult"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Sessions"
+        ],
+        "summary": "Create a new session",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSessionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionDtoResult"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateSessionDtoResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Events/{eventId}": {
+      "get": {
+        "tags": [
+          "Events"
+        ],
+        "summary": "Retrieves an event by its id.",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/Events/{eventId}/Locations": {
+      "get": {
+        "tags": [
+          "Locations"
+        ],
+        "summary": "Retrieves a list of locations associated based on event id.",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocationDtoIEnumerableResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CreateRoomDto": {
+        "required": [
+          "eventLocationId",
+          "name",
+          "displayName"
+        ],
+        "type": "object",
+        "properties": {
+          "eventLocationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          },
+          "displayName": {
+            "maxLength": 250,
+            "minLength": 0,
+            "type": "string"
+          }
+        }
+      },
+      "CreateSessionDto": {
+        "required": [
+          "endsAt",
+          "eventId",
+          "name",
+          "roomId",
+          "sourceSystemId",
+          "startsAt"
+        ],
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "pattern": "([0-9]+)",
+            "type": "integer",
+            "format": "int64"
+          },
+          "roomId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sessionTypeId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "sourceSystemId": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 350,
+            "minLength": 0,
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "EventLocationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "eventId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "locationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "locationName": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "$ref": "#/components/schemas/AddressDto"
+          }
+        }
+      },
+      "LocationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "eventLocations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EventLocationDto"
+            },
+            "nullable": true
+          }
+        }
+      },
+      "LocationDtoIEnumerableResult": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "$ref": "#/components/schemas/HttpStatusCode"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LocationDto"
+            },
+            "nullable": true
+          }
+        }
+      },
+      "HttpStatusCode": {
+        "enum": [
+          100, 101, 102, 103, 200, 201, 202, 203, 204, 205, 206, 207, 208, 226,
+          300, 301, 302, 303, 304, 305, 306, 307, 308,
+          400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 410, 411, 412, 413, 414, 415, 416, 417, 421, 422, 423, 424, 426, 428, 429, 431, 451,
+          500, 501, 502, 503, 504, 505, 506, 507, 508, 510, 511
+        ],
+        "type": "integer",
+        "format": "int32"
+      }
+    },
+    "securitySchemes": {
+      "Bearer": {
+        "type": "http",
+        "description": "Please provide a valid token",
+        "scheme": "Bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "Bearer": []
+    }
+  ]
+}

@@ -95,17 +95,29 @@ export class LegacyApiClient {
    */
   async get(endpointKey, params = {}) {
     try {
-      let url = ConfigManager.buildEndpointUrl('legacy', endpointKey, params);
+      // Extract query parameters but leave URL parameters for the buildEndpointUrl
+      const { search, showDeleted, ...urlParams } = params;
       
-      // Add API key as query parameter for legacy API
+      let url = ConfigManager.buildEndpointUrl('legacy', endpointKey, urlParams);
+      
+      // Add API key and other query parameters
       const urlObj = new URL(url);
       urlObj.searchParams.append('apiKey', this.config.legacy.apiKey);
+      
+      // Add additional query parameters if provided
+      if (search !== undefined) {
+        urlObj.searchParams.append('search', search);
+      }
+      if (showDeleted !== undefined) {
+        urlObj.searchParams.append('showDeleted', showDeleted);
+      }
+      
       url = urlObj.toString();
       
       // Add event name header for legacy API
       const headers = {};
-      if (params.eventName) {
-        headers['x-eventName'] = params.eventName;
+      if (urlParams.eventName) {
+        headers['x-eventName'] = urlParams.eventName;
       }
       
       const response = await this.httpClient.get(url, { headers });
@@ -149,19 +161,10 @@ export class LegacyApiClient {
     try {
       this.logger.info('Testing legacy API connection...');
       
-      // Test with health endpoint first
-      try {
-        await this.httpClient.get('/health');
-        this.logger.info('✅ Legacy API health check passed');
-      } catch (error) {
-        this.logger.warn('⚠️  Legacy API health endpoint failed, trying events...');
-      }
-      
-      // Test events endpoint
+      // Test with a simpler endpoint that should work with generic client token
       const url = `/v2/events?apiKey=${this.config.legacy.apiKey}`;
-      const headers = { 'x-eventName': 'admin' };
       
-      await this.httpClient.get(url, { headers });
+      await this.httpClient.get(url);
       this.logger.info('✅ Legacy API connection test passed');
       
       return true;
@@ -204,7 +207,16 @@ export class LegacyApiClient {
   async getRooms(eventName) {
     try {
       this.logger.info(`Fetching rooms for event: ${eventName}`);
-      return await this.get('rooms', { eventName });
+      const rooms = await this.get('rooms', { eventName });
+      
+      // Debug logging to see the actual data structure
+      this.logger.info(`Received ${rooms?.length || 0} rooms from API`);
+      if (rooms && rooms.length > 0) {
+        console.log('First room structure:', JSON.stringify(rooms[0], null, 2));
+        this.logger.info(`Room names: ${rooms.map(r => r.RoomName || r.name || r.roomName || r.Name || 'UNKNOWN').join(', ')}`);
+      }
+      
+      return rooms;
     } catch (error) {
       this.logger.error(`Failed to fetch rooms for event ${eventName}:`, error);
       throw error;
@@ -219,7 +231,7 @@ export class LegacyApiClient {
       this.logger.info(`Fetching room: ${roomName} for event: ${eventName}`);
       const rooms = await this.getRooms(eventName);
       
-      const room = rooms.find(r => r.name === roomName);
+      const room = rooms.find(r => r.RoomName === roomName || r.name === roomName);
       if (!room) {
         throw new Error(`Room '${roomName}' not found in event '${eventName}'`);
       }
@@ -234,18 +246,19 @@ export class LegacyApiClient {
   /**
    * Get sessions for an event/room
    */
-  async getSessions(eventName, roomName = null) {
+  async getSessions(eventName, roomId = null) {
     try {
-      this.logger.info(`Fetching sessions for event: ${eventName}${roomName ? `, room: ${roomName}` : ''}`);
+      this.logger.info(`Fetching sessions for event: ${eventName}${roomId ? `, room: ${roomId}` : ''}`);
       
-      const sessions = await this.get('sessions', { eventName });
-      
-      // Filter by room if specified
-      if (roomName) {
-        return sessions.filter(session => session.roomName === roomName);
+      if (roomId) {
+        // Use room-specific endpoint when room ID is provided
+        const sessions = await this.get('roomSessions', { eventName, roomId });
+        return sessions;
+      } else {
+        // Use general event sessions endpoint
+        const sessions = await this.get('sessions', { eventName });
+        return sessions;
       }
-      
-      return sessions;
     } catch (error) {
       this.logger.error(`Failed to fetch sessions for event ${eventName}:`, error);
       throw error;
@@ -276,15 +289,16 @@ export class LegacyApiClient {
   /**
    * Get users for an event/room
    */
-  async getUsers(eventName, roomName = null) {
+  async getUsers(eventName, roomId = null) {
     try {
-      this.logger.info(`Fetching users for event: ${eventName}${roomName ? `, room: ${roomName}` : ''}`);
+      this.logger.info(`Fetching users for event: ${eventName}${roomId ? `, room: ${roomId}` : ''}`);
       
-      const users = await this.get('users', { eventName });
+      // Use the correct eventUsers endpoint with required parameters
+      const users = await this.get('eventUsers', { eventName, search: '', showDeleted: true });
       
       // Filter by room if specified
-      if (roomName) {
-        return users.filter(user => user.roomName === roomName);
+      if (roomId) {
+        return users.filter(user => user.roomId === roomId);
       }
       
       return users;

@@ -113,6 +113,20 @@ export class CurrentSystemApiClient {
       }
       
       const response = await this.eventApiClient.request(config);
+      
+      // Handle wrapped API responses with data property
+      if (response.data && typeof response.data === 'object') {
+        // Check if response has the standard API wrapper structure
+        if (response.data.hasOwnProperty('data') && response.data.hasOwnProperty('isSuccess')) {
+          if (!response.data.isSuccess) {
+            throw new Error(`API Error: ${response.data.message || 'Unknown error'}`);
+          }
+          return response.data.data;
+        }
+        // For direct data responses
+        return response.data;
+      }
+      
       return response.data;
     } catch (error) {
       this.logger.error(`Failed to ${method} ${endpointKey}:`, error);
@@ -133,6 +147,20 @@ export class CurrentSystemApiClient {
       }
       
       const response = await this.filesApiClient.request(config);
+      
+      // Handle wrapped API responses with data property
+      if (response.data && typeof response.data === 'object') {
+        // Check if response has the standard API wrapper structure
+        if (response.data.hasOwnProperty('data') && response.data.hasOwnProperty('isSuccess')) {
+          if (!response.data.isSuccess) {
+            throw new Error(`API Error: ${response.data.message || 'Unknown error'}`);
+          }
+          return response.data.data;
+        }
+        // For direct data responses
+        return response.data;
+      }
+      
       return response.data;
     } catch (error) {
       this.logger.error(`Failed to ${method} ${endpointKey}:`, error);
@@ -197,6 +225,33 @@ export class CurrentSystemApiClient {
       this.logger.info(`✅ Room created with ID: ${response.id}`);
       return response;
     } catch (error) {
+      // Handle duplicate room gracefully
+      if (error.message.includes('409') && error.message.includes('already exists')) {
+        this.logger.warn(`⚠️  Room "${roomData.name}" already exists, skipping creation`);
+        
+        // Try to get the existing room
+        try {
+          const existingRooms = await this.getRooms(roomData.eventId);
+          const existingRoom = existingRooms.find(room => room.name === roomData.name);
+          
+          if (existingRoom) {
+            this.logger.info(`📋 Using existing room "${roomData.name}" with ID: ${existingRoom.id}`);
+            return existingRoom;
+          }
+        } catch (getRoomError) {
+          this.logger.warn(`Could not retrieve existing room: ${getRoomError.message}`);
+        }
+        
+        // Return a mock room object if we can't get the existing one
+        return {
+          id: `existing-${roomData.name.replace(/\s+/g, '-').toLowerCase()}`,
+          name: roomData.name,
+          displayName: roomData.displayName,
+          eventLocationId: roomData.eventLocationId,
+          _isExisting: true
+        };
+      }
+      
       throw new Error(`Failed to create room "${roomData.name}": ${error.message}`);
     }
   }
@@ -335,16 +390,12 @@ export class CurrentSystemApiClient {
       Object.entries(metadata).forEach(([key, value]) => {
         formData.append(key, value);
       });
+
+      // Use filesApiRequest for consistency (this returns response.data)
+      const fileData = await this.filesApiRequest('POST', 'upload', formData);
       
-      const response = await this.filesApiClient.post('/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        },
-        timeout: this.config.migration.fileUploadTimeout || 300000
-      });
-      
-      this.logger.fileOperation('uploaded', fileName, response.data.size);
-      return response.data;
+      this.logger.fileOperation('uploaded', fileName, fileData.size);
+      return fileData;
       
     } catch (error) {
       this.logger.fileError('uploading', fileName, error);
@@ -358,10 +409,39 @@ export class CurrentSystemApiClient {
   async getEvent(eventId) {
     try {
       this.logger.info(`Fetching event: ${eventId}`);
-      const response = await this.eventApiRequest('GET', 'eventById', null, { eventId });
-      return response;
+      const eventData = await this.eventApiRequest('GET', 'eventById', null, { eventId });
+      
+      if (!eventData) {
+        this.logger.warn(`No event data returned for ID: ${eventId}`);
+        return null;
+      }
+      
+      this.logger.info(`Event ${eventId} loaded successfully`);
+      return eventData;
     } catch (error) {
+      this.logger.error(`Failed to fetch event ${eventId}: ${error.message}`);
       throw new Error(`Failed to fetch event ${eventId}: ${error.message}`);
+    }
+  }
+
+  /**
+   * Get event locations by event ID
+   */
+  async getEventLocations(eventId) {
+    try {
+      this.logger.info(`Fetching event locations for event: ${eventId}`);
+      const locationsData = await this.eventApiRequest('GET', 'eventLocations', null, { eventId });
+      
+      if (!locationsData || !Array.isArray(locationsData)) {
+        this.logger.warn(`No event locations returned for event ID: ${eventId}`);
+        return [];
+      }
+      
+      this.logger.info(`Found ${locationsData.length} locations for event ${eventId}`);
+      return locationsData;
+    } catch (error) {
+      this.logger.error(`Failed to fetch event locations for event ${eventId}: ${error.message}`);
+      throw new Error(`Failed to fetch event locations for event ${eventId}: ${error.message}`);
     }
   }
 

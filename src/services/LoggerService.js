@@ -2,7 +2,7 @@ import winston from 'winston';
 import { join } from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import { existsSync, mkdirSync } from 'fs';
+import { existsSync, mkdirSync, renameSync, statSync } from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -42,6 +42,9 @@ export class LoggerService {
     if (!existsSync(logsDir)) {
       mkdirSync(logsDir, { recursive: true });
     }
+
+    // Archive existing logs if they exist
+    this.archivePreviousLogs(logsDir);
 
     // Define log format
     const logFormat = winston.format.combine(
@@ -116,6 +119,45 @@ export class LoggerService {
 
     // Add migration-specific methods
     this.addMigrationMethods();
+  }
+
+  /**
+   * Archive previous log files before starting a new migration run
+   */
+  archivePreviousLogs(logsDir) {
+    const logFiles = [
+      'migration.log',
+      'migration-errors.log', 
+      'migration-exceptions.log',
+      'migration-rejections.log'
+    ];
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const archiveDir = join(logsDir, 'archive');
+    
+    // Create archive directory if it doesn't exist
+    if (!existsSync(archiveDir)) {
+      mkdirSync(archiveDir, { recursive: true });
+    }
+
+    logFiles.forEach(logFile => {
+      const logPath = join(logsDir, logFile);
+      if (existsSync(logPath)) {
+        // Check if file has content
+        const stats = statSync(logPath);
+        if (stats.size > 0) {
+          const archivedName = `${timestamp}-${logFile}`;
+          const archivePath = join(archiveDir, archivedName);
+          
+          try {
+            renameSync(logPath, archivePath);
+            console.log(`📦 Archived ${logFile} to ${archivedName}`);
+          } catch (error) {
+            console.warn(`⚠️  Failed to archive ${logFile}: ${error.message}`);
+          }
+        }
+      }
+    });
   }
 
   /**

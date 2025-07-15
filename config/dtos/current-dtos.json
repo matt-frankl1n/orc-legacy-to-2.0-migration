@@ -32,209 +32,192 @@
   },
   "room": {
     "create": {
-      "required": ["eventId", "name"],
-      "optional": ["description", "locationName", "maxCapacity", "tags"],
+      "required": ["name", "displayName", "eventLocationId"],
+      "optional": [],
       "validation": {
-        "eventId": { "type": "number" },
-        "name": { "maxLength": 255 },
-        "description": { "maxLength": 1000 },
-        "locationName": { "maxLength": 255 },
-        "maxCapacity": { "type": "number", "min": 1 },
-        "tags": { "type": "object" }
+        "name": { "type": "string", "maxLength": 100, "minLength": 0, "required": true },
+        "displayName": { "type": "string", "maxLength": 250, "minLength": 0, "required": true },
+        "eventLocationId": { "type": "integer", "format": "int64", "required": true }
       }
     },
     "update": {
       "required": ["id"],
-      "optional": ["name", "description", "locationName", "maxCapacity", "tags"],
+      "optional": ["name", "displayName", "eventLocationId"],
       "validation": {
-        "id": { "type": "number" },
-        "name": { "maxLength": 255 },
-        "description": { "maxLength": 1000 },
-        "locationName": { "maxLength": 255 },
-        "maxCapacity": { "type": "number", "min": 1 },
-        "tags": { "type": "object" }
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "displayName": { "type": "string" },
+        "eventLocationId": { "type": "number" }
       }
     }
   },
   "session": {
     "create": {
-      "required": ["eventId", "roomId", "title", "startDateTime", "endDateTime"],
-      "optional": ["description", "presenter", "moderator", "tags", "metadata", "status"],
+      "required": ["eventId", "roomId", "sourceSystemId", "name", "startsAt", "endsAt"],
+      "optional": ["sessionTypeId", "description"],
       "validation": {
-        "eventId": { "type": "number" },
-        "roomId": { "type": "number" },
-        "title": { "maxLength": 255 },
-        "description": { "maxLength": 1000 },
-        "startDateTime": { "type": "datetime" },
-        "endDateTime": { "type": "datetime" },
-        "presenter": { "type": "object" },
-        "moderator": { "type": "object" },
-        "tags": { "type": "array" },
-        "metadata": { "type": "object" },
-        "status": { "enum": ["scheduled", "in_progress", "completed", "cancelled"] }
+        "eventId": { "type": "integer", "format": "int64", "pattern": "([0-9]+)", "required": true },
+        "roomId": { "type": "string", "format": "uuid", "required": true },
+        "sessionTypeId": { "type": "string", "format": "uuid", "nullable": true },
+        "sourceSystemId": { "type": "string", "maxLength": 100, "minLength": 0, "required": true },
+        "name": { "type": "string", "maxLength": 350, "minLength": 0, "required": true },
+        "description": { "type": "string", "nullable": true },
+        "startsAt": { "type": "string", "format": "date-time", "required": true },
+        "endsAt": { "type": "string", "format": "date-time", "required": true }
       }
     },
     "update": {
       "required": ["id"],
-      "optional": ["title", "description", "startDateTime", "endDateTime", "presenter", "moderator", "tags", "metadata", "status"],
+      "optional": ["name", "description", "startsAt", "endsAt", "sessionTags", "sessionTracks"],
       "validation": {
-        "id": { "type": "number" },
-        "title": { "maxLength": 255 },
-        "description": { "maxLength": 1000 },
-        "startDateTime": { "type": "datetime" },
-        "endDateTime": { "type": "datetime" },
-        "presenter": { "type": "object" },
-        "moderator": { "type": "object" },
-        "tags": { "type": "array" },
-        "metadata": { "type": "object" },
-        "status": { "enum": ["scheduled", "in_progress", "completed", "cancelled"] }
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "startsAt": { "type": "string", "format": "date-time" },
+        "endsAt": { "type": "string", "format": "date-time" },
+        "sessionTags": { "type": "array" },
+        "sessionTracks": { "type": "array" }
       }
     }
   },
   "subSession": {
     "create": {
-      "required": ["eventId", "parentSessionId", "title", "startDateTime", "endDateTime"],
-      "optional": ["description", "presenter", "tags", "status"],
+      "required": ["sessionId", "sourceSystemId", "name", "startsAt", "endsAt", "order"],
+      "optional": ["description", "subSessionTags"],
       "validation": {
-        "eventId": { "type": "number" },
-        "parentSessionId": { "type": "number" },
-        "title": { "maxLength": 255 },
-        "description": { "maxLength": 1000 },
-        "startDateTime": { "type": "datetime" },
-        "endDateTime": { "type": "datetime" },
-        "presenter": { "type": "object" },
-        "tags": { "type": "array" },
-        "status": { "enum": ["scheduled", "in_progress", "completed", "cancelled"] }
+        "sessionId": { "type": "string", "format": "uuid", "required": true },
+        "sourceSystemId": { "type": "string", "required": true },
+        "name": { "type": "string", "required": true },
+        "description": { "type": "string" },
+        "startsAt": { "type": "string", "format": "date-time", "required": true },
+        "endsAt": { "type": "string", "format": "date-time", "required": true },
+        "order": { "type": "number", "required": true },
+        "subSessionTags": { "type": "array" }
       }
     },
     "update": {
       "required": ["id"],
-      "optional": ["title", "description", "startDateTime", "endDateTime", "presenter", "tags", "status"],
+      "optional": ["name", "description", "startsAt", "endsAt", "order", "subSessionTags"],
       "validation": {
-        "id": { "type": "number" },
-        "title": { "maxLength": 255 },
-        "description": { "maxLength": 1000 },
-        "startDateTime": { "type": "datetime" },
-        "endDateTime": { "type": "datetime" },
-        "presenter": { "type": "object" },
-        "tags": { "type": "array" },
-        "status": { "enum": ["scheduled", "in_progress", "completed", "cancelled"] }
+        "id": { "type": "string", "format": "uuid" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "startsAt": { "type": "string", "format": "date-time" },
+        "endsAt": { "type": "string", "format": "date-time" },
+        "order": { "type": "number" },
+        "subSessionTags": { "type": "array" }
       }
     }
   },
   "user": {
     "create": {
-      "required": ["eventId", "email", "firstName", "lastName"],
-      "optional": ["company", "jobTitle", "phoneNumber", "tags", "metadata"],
+      "required": ["email", "userName", "firstName", "lastName", "eventId"],
+      "optional": ["middleName", "preferredName", "prefix", "suffix", "credentials", "title", "organization", "phoneNumber", "website", "hasCheckedInSrr", "isVip", "hasLoggedIn", "disableDisclosureDisplay", "city", "state", "country", "isSystemUser", "userTags", "createUserSocialTagDto"],
       "validation": {
-        "eventId": { "type": "number" },
-        "email": { "type": "email", "maxLength": 255 },
-        "firstName": { "maxLength": 100 },
-        "lastName": { "maxLength": 100 },
-        "company": { "maxLength": 255 },
-        "jobTitle": { "maxLength": 255 },
-        "phoneNumber": { "maxLength": 20 },
-        "tags": { "type": "array" },
-        "metadata": { "type": "object" }
+        "email": { "type": "string", "required": true },
+        "userName": { "type": "string", "required": true },
+        "firstName": { "type": "string", "required": true },
+        "lastName": { "type": "string", "required": true },
+        "middleName": { "type": "string" },
+        "preferredName": { "type": "string" },
+        "prefix": { "type": "string" },
+        "suffix": { "type": "string" },
+        "credentials": { "type": "string" },
+        "title": { "type": "string" },
+        "organization": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "website": { "type": "string" },
+        "hasCheckedInSrr": { "type": "boolean" },
+        "isVip": { "type": "boolean" },
+        "hasLoggedIn": { "type": "boolean" },
+        "disableDisclosureDisplay": { "type": "boolean" },
+        "city": { "type": "string" },
+        "state": { "type": "string" },
+        "country": { "type": "string" },
+        "eventId": { "type": "number", "required": true },
+        "isSystemUser": { "type": "boolean" },
+        "userTags": { "type": "array" },
+        "createUserSocialTagDto": { "type": "array" }
       }
     },
     "update": {
       "required": ["id"],
-      "optional": ["email", "firstName", "lastName", "company", "jobTitle", "phoneNumber", "tags", "metadata"],
+      "optional": ["email", "userName", "firstName", "lastName", "middleName", "preferredName", "prefix", "suffix", "credentials", "title", "organization", "phoneNumber", "website", "hasCheckedInSrr", "isVip", "hasLoggedIn", "disableDisclosureDisplay", "city", "state", "country", "isSystemUser", "userTags", "createUserSocialTagDto"],
       "validation": {
-        "id": { "type": "number" },
-        "email": { "type": "email", "maxLength": 255 },
-        "firstName": { "maxLength": 100 },
-        "lastName": { "maxLength": 100 },
-        "company": { "maxLength": 255 },
-        "jobTitle": { "maxLength": 255 },
-        "phoneNumber": { "maxLength": 20 },
-        "tags": { "type": "array" },
-        "metadata": { "type": "object" }
+        "id": { "type": "string", "format": "uuid" },
+        "email": { "type": "string" },
+        "userName": { "type": "string" },
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "middleName": { "type": "string" },
+        "preferredName": { "type": "string" },
+        "prefix": { "type": "string" },
+        "suffix": { "type": "string" },
+        "credentials": { "type": "string" },
+        "title": { "type": "string" },
+        "organization": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "website": { "type": "string" },
+        "hasCheckedInSrr": { "type": "boolean" },
+        "isVip": { "type": "boolean" },
+        "hasLoggedIn": { "type": "boolean" },
+        "disableDisclosureDisplay": { "type": "boolean" },
+        "city": { "type": "string" },
+        "state": { "type": "string" },
+        "country": { "type": "string" },
+        "isSystemUser": { "type": "boolean" },
+        "userTags": { "type": "array" },
+        "createUserSocialTagDto": { "type": "array" }
       }
     }
   },
-  "moderator": {
+  "file": {
     "create": {
-      "required": ["eventId", "userId", "roomId"],
-      "optional": ["role", "permissions", "tags"],
+      "required": ["eventId", "fileName", "fileType", "createdBy", "fileSize"],
+      "optional": ["isStartup", "description", "fileTags", "sessionId", "subSessionId", "userId"],
       "validation": {
-        "eventId": { "type": "number" },
-        "userId": { "type": "number" },
-        "roomId": { "type": "number" },
-        "role": { "enum": ["moderator", "presenter", "admin"] },
-        "permissions": { "type": "array" },
-        "tags": { "type": "array" }
+        "eventId": { "type": "number", "required": true },
+        "fileName": { "type": "string", "required": true },
+        "fileType": { "type": "string", "enum": ["Unknown", "Presentation", "Supplemental", "Avatar", "Poster", "Recording", "Transcript", "Chat", "Poll", "Survey", "Handout", "Resource", "Agenda", "Speaker", "Sponsor", "Background"], "required": true },
+        "createdBy": { "type": "string", "format": "uuid", "required": true },
+        "fileSize": { "type": "number", "required": true },
+        "isStartup": { "type": "boolean" },
+        "description": { "type": "string" },
+        "fileTags": { "type": "object" },
+        "sessionId": { "type": "string", "format": "uuid" },
+        "subSessionId": { "type": "string", "format": "uuid" },
+        "userId": { "type": "string", "format": "uuid" }
       }
     },
     "update": {
       "required": ["id"],
-      "optional": ["role", "permissions", "tags"],
+      "optional": ["fileName", "isStartup", "description", "fileTags", "sessionId", "subSessionId", "userId", "createdBy", "fileSize"],
       "validation": {
-        "id": { "type": "number" },
-        "role": { "enum": ["moderator", "presenter", "admin"] },
-        "permissions": { "type": "array" },
-        "tags": { "type": "array" }
+        "id": { "type": "string", "format": "uuid" },
+        "fileName": { "type": "string" },
+        "isStartup": { "type": "boolean" },
+        "description": { "type": "string" },
+        "fileTags": { "type": "object" },
+        "sessionId": { "type": "string", "format": "uuid" },
+        "subSessionId": { "type": "string", "format": "uuid" },
+        "userId": { "type": "string", "format": "uuid" },
+        "createdBy": { "type": "string", "format": "uuid" },
+        "fileSize": { "type": "number" }
       }
-    }
-  },
-  "sessionFile": {
-    "create": {
-      "required": ["sessionId", "originalFileName", "fileSizeBytes", "mimeType"],
-      "optional": ["description", "tags", "metadata"],
+    },
+    "multipartUpload": {
+      "required": ["eventId", "filePath", "bucketName", "uploadId", "parts", "fileName", "fileType"],
+      "optional": ["sessionId", "subSessionId"],
       "validation": {
-        "sessionId": { "type": "number" },
-        "originalFileName": { "maxLength": 255 },
-        "fileSizeBytes": { "type": "number", "min": 1 },
-        "mimeType": { "maxLength": 100 },
-        "description": { "maxLength": 1000 },
-        "tags": { "type": "array" },
-        "metadata": { "type": "object" }
-      }
-    }
-  },
-  "subSessionFile": {
-    "create": {
-      "required": ["subSessionId", "originalFileName", "fileSizeBytes", "mimeType"],
-      "optional": ["description", "tags", "metadata"],
-      "validation": {
-        "subSessionId": { "type": "number" },
-        "originalFileName": { "maxLength": 255 },
-        "fileSizeBytes": { "type": "number", "min": 1 },
-        "mimeType": { "maxLength": 100 },
-        "description": { "maxLength": 1000 },
-        "tags": { "type": "array" },
-        "metadata": { "type": "object" }
-      }
-    }
-  },
-  "userFile": {
-    "create": {
-      "required": ["userId", "originalFileName", "fileSizeBytes", "mimeType"],
-      "optional": ["description", "tags", "metadata"],
-      "validation": {
-        "userId": { "type": "number" },
-        "originalFileName": { "maxLength": 255 },
-        "fileSizeBytes": { "type": "number", "min": 1 },
-        "mimeType": { "maxLength": 100 },
-        "description": { "maxLength": 1000 },
-        "tags": { "type": "array" },
-        "metadata": { "type": "object" }
-      }
-    }
-  },
-  "moderatorFile": {
-    "create": {
-      "required": ["moderatorId", "originalFileName", "fileSizeBytes", "mimeType"],
-      "optional": ["description", "tags", "metadata"],
-      "validation": {
-        "moderatorId": { "type": "number" },
-        "originalFileName": { "maxLength": 255 },
-        "fileSizeBytes": { "type": "number", "min": 1 },
-        "mimeType": { "maxLength": 100 },
-        "description": { "maxLength": 1000 },
-        "tags": { "type": "array" },
-        "metadata": { "type": "object" }
+        "eventId": { "type": "number", "required": true },
+        "filePath": { "type": "string", "required": true },
+        "bucketName": { "type": "string", "required": true },
+        "uploadId": { "type": "string", "required": true },
+        "parts": { "type": "array", "required": true },
+        "fileName": { "type": "string", "required": true },
+        "fileType": { "type": "string", "enum": ["Unknown", "Presentation", "Supplemental", "Avatar", "Poster", "Recording", "Transcript", "Chat", "Poll", "Survey", "Handout", "Resource", "Agenda", "Speaker", "Sponsor", "Background"], "required": true },
+        "sessionId": { "type": "string" },
+        "subSessionId": { "type": "string" }
       }
     }
   }

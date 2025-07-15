@@ -1,0 +1,546 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "File V1",
+    "description": "API for managing file operations including upload, download, and metadata management.",
+    "version": "v1"
+  },
+  "servers": [
+    {
+      "url": "/files-api"
+    }
+  ],
+  "paths": {
+    "/SessionFiles": {
+      "post": {
+        "tags": [
+          "SessionFiles"
+        ],
+        "summary": "Create a session file",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "CreatedBy",
+                  "EventId",
+                  "File",
+                  "FileType",
+                  "SessionId"
+                ],
+                "type": "object",
+                "properties": {
+                  "SessionId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "File": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "EventId": {
+                    "type": "integer",
+                    "format": "int64"
+                  },
+                  "CreatedBy": {
+                    "type": "string"
+                  },
+                  "FileType": {
+                    "$ref": "#/components/schemas/FileType"
+                  },
+                  "ChunkId": {
+                    "type": "string"
+                  },
+                  "FileTags.ARS": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "FileTags.QC": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "FileTags.MacFile": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "FileTags.Locked": {
+                    "type": "boolean",
+                    "default": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileDtoResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/SubSessionFiles": {
+      "post": {
+        "tags": [
+          "SubSessionFiles"
+        ],
+        "summary": "Create a sub session file",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "CreatedBy",
+                  "EventId",
+                  "File",
+                  "FileType",
+                  "SubSessionId"
+                ],
+                "type": "object",
+                "properties": {
+                  "SubSessionId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "IsStartup": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "File": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "EventId": {
+                    "type": "integer",
+                    "format": "int64"
+                  },
+                  "CreatedBy": {
+                    "type": "string"
+                  },
+                  "FileType": {
+                    "$ref": "#/components/schemas/FileType"
+                  },
+                  "ChunkId": {
+                    "type": "string"
+                  },
+                  "FileTags.ARS": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "FileTags.QC": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "FileTags.MacFile": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "FileTags.Locked": {
+                    "type": "boolean",
+                    "default": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileDtoResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/UserFiles": {
+      "post": {
+        "tags": [
+          "UserFiles"
+        ],
+        "summary": "Create a user file",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "CreatedBy",
+                  "EventId",
+                  "File",
+                  "FileType",
+                  "UserId"
+                ],
+                "type": "object",
+                "properties": {
+                  "UserId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "File": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "EventId": {
+                    "type": "integer",
+                    "format": "int64"
+                  },
+                  "CreatedBy": {
+                    "type": "string"
+                  },
+                  "FileType": {
+                    "$ref": "#/components/schemas/FileType"
+                  },
+                  "ChunkId": {
+                    "type": "string"
+                  },
+                  "FileTags.ARS": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "FileTags.QC": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "FileTags.MacFile": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "FileTags.Locked": {
+                    "type": "boolean",
+                    "default": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileDtoResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/AllFiles/Events/{eventId}": {
+      "get": {
+        "tags": [
+          "AllFiles"
+        ],
+        "summary": "Get all files for an event",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/AllFiles/Events/{eventId}/FileTypes/{fileType}/Files/Metadata": {
+      "post": {
+        "tags": [
+          "AllFiles"
+        ],
+        "summary": "Creates file metadata without requiring a file upload.",
+        "parameters": [
+          {
+            "name": "fileType",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/FileType"
+            }
+          },
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileMetadataUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileDtoResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/AllFiles/Events/{eventId}/FileTypes/{fileType}/Files/{id}/Metadata": {
+      "put": {
+        "tags": [
+          "AllFiles"
+        ],
+        "summary": "Updates file metadata without requiring a new file upload.",
+        "parameters": [
+          {
+            "name": "fileType",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/FileType"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "eventId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileMetadataUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileDtoResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "FileType": {
+        "enum": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "FileDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "eventId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fileScanStatusId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "originalFileId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fileTypeId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "path": {
+            "type": "string",
+            "nullable": true
+          },
+          "extension": {
+            "type": "string",
+            "nullable": true
+          },
+          "fileSizeInBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "isStartup": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "internalFileUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "externalFileUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "showsiteFileUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "FileDtoResult": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "$ref": "#/components/schemas/HttpStatusCode"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "data": {
+            "$ref": "#/components/schemas/FileDto"
+          }
+        }
+      },
+      "FileMetadataUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "type": "string",
+            "nullable": true
+          },
+          "isStartup": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "sessionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "subSessionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "createdBy": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "fileSize": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "HttpStatusCode": {
+        "enum": [
+          100, 101, 102, 103, 200, 201, 202, 203, 204, 205, 206, 207, 208, 226,
+          300, 301, 302, 303, 304, 305, 306, 307, 308,
+          400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 410, 411, 412, 413, 414, 415, 416, 417, 421, 422, 423, 424, 426, 428, 429, 431, 451,
+          500, 501, 502, 503, 504, 505, 506, 507, 508, 510, 511
+        ],
+        "type": "integer",
+        "format": "int32"
+      }
+    },
+    "securitySchemes": {
+      "Bearer": {
+        "type": "http",
+        "description": "Please provide a valid token",
+        "scheme": "Bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "Bearer": []
+    }
+  ]
+}

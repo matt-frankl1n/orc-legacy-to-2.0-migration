@@ -1,0 +1,1014 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Auth V1",
+    "description": "API for managing authentication and authorization operations.",
+    "version": "v1"
+  },
+  "servers": [
+    {
+      "url": "/auth-api"
+    }
+  ],
+  "paths": {
+    "/Auth/Events/{eventId}/register": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Registers a new user.",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "The user registration details.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterUserDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterUserDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Returns the newly created user.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationUserDto"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationUserDto"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationUserDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "If the user registration details are invalid.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "If there was an internal server error.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Auth/reset-password": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Resets the password for a user.",
+        "requestBody": {
+          "description": "The password reset details.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetUserPasswordDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetUserPasswordDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetUserPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "If the password was successfully reset.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "If the password reset details are invalid.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "If there was an internal server error.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Auth/forgot-password": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Handles forgot password requests.",
+        "requestBody": {
+          "description": "The forgot password request details.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "If the forgot password request was successfully processed.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "If the forgot password request details are invalid.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "If the user's email is not found.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "If there was an internal server error.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Auth/forgot-password-change": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Changes the password for a user after forgot password.",
+        "requestBody": {
+          "description": "The password change details.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "If the password was successfully changed.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "If the password change details are invalid.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "If the user's email is not found.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "If there was an internal server error.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Auth/change-password": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Changes the password for a user.",
+        "requestBody": {
+          "description": "The password change details.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "If the password was successfully changed.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "If the password change details are invalid.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "If the user's email is not found.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "If there was an internal server error.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Authenticates a user and returns an access token.",
+        "responses": {
+          "200": {
+            "description": "If the login was successful.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "If the login request is invalid.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "If the if the user is forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "If there was an internal server error.",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "string",
+                  "example": ""
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/Auth/Events/{eventId}/adduserrole": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Adds roles to a user.",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "The details of the user and roles to be added.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddRolesToUserDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddRolesToUserDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddRolesToUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "If the roles were successfully added."
+          },
+          "400": {
+            "description": "If the request details are invalid."
+          },
+          "404": {
+            "description": "If the request details are not found."
+          },
+          "500": {
+            "description": "If there was an internal server error."
+          }
+        }
+      }
+    },
+    "/Auth/Events/{eventId}/removeuserrole": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Removes roles from a user.",
+        "parameters": [
+          {
+            "name": "eventId",
+            "in": "path",
+            "description": "The event identifier associated with the operation.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "The details of the user and roles to be removed.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveRolesFromUserDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveRolesFromUserDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveRolesFromUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "If the roles were successfully removed."
+          },
+          "400": {
+            "description": "If the request details are invalid."
+          },
+          "404": {
+            "description": "If the request details are not found."
+          },
+          "500": {
+            "description": "If there was an internal server error."
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AddRolesToUserDto": {
+        "required": [
+          "roles",
+          "userName"
+        ],
+        "type": "object",
+        "properties": {
+          "userName": {
+            "type": "string",
+            "nullable": true,
+            "example": ""
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": ""
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ApplicationUserDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "nullable": true,
+            "example": ""
+          },
+          "userName": {
+            "type": "string",
+            "nullable": true,
+            "example": ""
+          },
+          "webSite": {
+            "type": "string",
+            "nullable": true,
+            "example": ""
+          },
+          "phoneNumber": {
+            "type": "string",
+            "nullable": true,
+            "example": ""
+          },
+          "firstName": {
+            "type": "string",
+            "nullable": true,
+            "example": ""
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true,
+            "example": ""
+          },
+          "address": {
+            "type": "string",
+            "nullable": true,
+            "example": ""
+          },
+          "firstTimeLogin": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ChangePasswordDto": {
+        "required": [
+          "confirmPassword",
+          "newPassword",
+          "token",
+          "userName"
+        ],
+        "type": "object",
+        "properties": {
+          "userName": {
+            "type": "string",
+            "nullable": true,
+            "example": ""
+          },
+          "token": {
+            "type": "string",
+            "nullable": true,
+            "example": ""
+          },
+          "newPassword": {
+            "minLength": 6,
+            "type": "string",
+            "nullable": true,
+            "example": ""
+          },
+          "confirmPassword": {
+            "type": "string",
+            "nullable": true,
+            "example": ""
+          },
+          "eventId": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ForgotPasswordDto": {
+        "required": [
+          "eventId",
+          "userName"
+        ],
+        "type": "object",
+        "properties": {
+          "userName": {
+            "type": "string",
+            "nullable": true,
+            "example": ""
+          },
+          "eventId": {
+            "minimum": 0,
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RegisterUserDto": {
+        "required": [
+          "email",
+          "userName"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "nullable": true,
+            "example": ""
+          },
+          "userName": {
+            "type": "string",
+            "nullable": true,
+            "example": ""
+          }
+        },
+        "additionalProperties": false
+      },
+      "RemoveRolesFromUserDto": {
+        "required": [
+          "roles",
+          "userName"
+        ],
+        "type": "object",
+        "properties": {
+          "userName": {
+            "type": "string",
+            "nullable": true,
+            "example": ""
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "example": ""
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ResetUserPasswordDto": {
+        "required": [
+          "confirmPassword",
+          "newPassword",
+          "userName"
+        ],
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "minimum": 0,
+            "type": "integer",
+            "format": "int64"
+          },
+          "userName": {
+            "type": "string",
+            "nullable": true,
+            "example": ""
+          },
+          "newPassword": {
+            "type": "string",
+            "nullable": true,
+            "example": ""
+          },
+          "confirmPassword": {
+            "type": "string",
+            "nullable": true,
+            "example": ""
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "Bearer": {
+        "type": "http",
+        "description": "Please provide a valid token",
+        "scheme": "Bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "Bearer": []
+    }
+  ]
+}

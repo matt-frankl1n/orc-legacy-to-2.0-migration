@@ -74,6 +74,22 @@ export class MigrationService {
     const { legacyEventName, targetEventId, verbose, skipFiles, dryRun } = configuration;
     
     try {
+      if (verbose) this.logger.info('🔍 Fetching target event data...');
+      
+      // Fetch target event data
+      const targetEvent = await this.currentClient.getEvent(targetEventId);
+      if (!targetEvent) {
+        throw new Error(`Target event ${targetEventId} not found`);
+      }
+      
+      // Fetch event locations separately
+      const eventLocations = await this.currentClient.getEventLocations(targetEventId);
+      if (!eventLocations || eventLocations.length === 0) {
+        throw new Error(`Target event ${targetEventId} has no event locations`);
+      }
+      
+      this.logger.info(`Found target event with ${eventLocations.length} event locations`);
+      
       if (verbose) this.logger.info('🔍 Fetching all rooms from legacy event...');
       
       // Fetch all rooms from legacy system
@@ -93,10 +109,10 @@ export class MigrationService {
         return;
       }
       
-      // Process rooms in parallel
+      // Process rooms in parallel with event location data
       const roomResults = await this.parallelProcessor.processRooms(
         rooms,
-        (room) => this.processRoom(room, targetEventId, { verbose, skipFiles }),
+        (room) => this.processRoom(room, targetEventId, { verbose, skipFiles, eventLocations, legacyEventName }),
         (current, total) => this.progressTracker.updateProgress('Room Migration', current, total)
       );
       
@@ -116,6 +132,22 @@ export class MigrationService {
     const { legacyEventName, targetEventId, roomName, verbose, skipFiles, dryRun } = configuration;
     
     try {
+      if (verbose) this.logger.info('🔍 Fetching target event data...');
+      
+      // Fetch target event data
+      const targetEvent = await this.currentClient.getEvent(targetEventId);
+      if (!targetEvent) {
+        throw new Error(`Target event ${targetEventId} not found`);
+      }
+      
+      // Fetch event locations separately
+      const eventLocations = await this.currentClient.getEventLocations(targetEventId);
+      if (!eventLocations || eventLocations.length === 0) {
+        throw new Error(`Target event ${targetEventId} has no event locations`);
+      }
+      
+      this.logger.info(`Found target event with ${eventLocations.length} event locations`);
+      
       if (verbose) this.logger.info(`🔍 Fetching room "${roomName}" from legacy event...`);
       
       // Fetch specific room from legacy system
@@ -132,8 +164,8 @@ export class MigrationService {
         return;
       }
       
-      // Process the room
-      const roomResult = await this.processRoom(room, targetEventId, { verbose, skipFiles });
+      // Process the room with event location data
+      const roomResult = await this.processRoom(room, targetEventId, { verbose, skipFiles, eventLocations, legacyEventName });
       
       // Update result
       result.statistics.roomsProcessed = 1;
@@ -155,22 +187,29 @@ export class MigrationService {
    * Process a single room with all its associated data
    */
   async processRoom(room, targetEventId, options = {}) {
-    const { verbose, skipFiles } = options;
+    const { verbose, skipFiles, eventLocations, legacyEventName } = options;
     const roomResult = { success: true, errors: [], sessionsCreated: 0, filesUploaded: 0, usersProcessed: 0 };
     const startTime = Date.now();
     
     try {
-      this.logger.roomStart(room.name);
+      // Normalize room name from different possible field names
+      const roomName = room.RoomName || room.name || room.roomName || room.Name || room.DisplayName;
+      
+      this.logger.roomStart(roomName);
+      
+      // Find the appropriate eventLocationId from event locations
+      // For now, use the first event location - this may need to be more sophisticated
+      const eventLocationId = eventLocations?.[0]?.id || targetEventId;
       
       // Step 1: Transform and validate room data
-      const transformedRoom = await this.validationService.transformLegacyRoom(room, targetEventId);
+      const transformedRoom = await this.validationService.transformLegacyRoom(room, targetEventId, eventLocationId);
       
       // Step 2: Create room in current system
       const createdRoom = await this.currentClient.createRoom(transformedRoom);
-      if (verbose) this.logger.info(`✅ Room "${room.name}" created with ID: ${createdRoom.id}`);
+      if (verbose) this.logger.info(`✅ Room "${roomName}" created with ID: ${createdRoom.id}`);
       
       // Step 3: Fetch and process sessions
-      const sessions = await this.legacyClient.getSessions(room.eventName, room.name);
+      const sessions = await this.legacyClient.getSessions(legacyEventName, room.RoomId);
       if (sessions.length > 0) {
         const sessionResults = await this.processSessions(sessions, createdRoom.id, targetEventId, options);
         roomResult.sessionsCreated = sessionResults.created;
@@ -178,7 +217,7 @@ export class MigrationService {
       }
       
       // Step 4: Fetch and process users/moderators
-      const users = await this.legacyClient.getUsers(room.eventName, room.name);
+      const users = await this.legacyClient.getUsers(legacyEventName, room.RoomId);
       if (users.length > 0) {
         const userResults = await this.processUsers(users, createdRoom.id, targetEventId, options);
         roomResult.usersProcessed = userResults.processed;
@@ -187,7 +226,7 @@ export class MigrationService {
       
       // Step 5: Process files if not skipped
       if (!skipFiles) {
-        const files = await this.legacyClient.getFiles(room.eventName, room.name);
+        const files = await this.legacyClient.getFiles(legacyEventName, roomName);
         if (files.length > 0) {
           const fileResults = await this.processFiles(files, createdRoom.id, targetEventId, options);
           roomResult.filesUploaded = fileResults.uploaded;
@@ -219,9 +258,28 @@ export class MigrationService {
     const result = { created: 0, errors: [] };
     
     try {
+      // Debug: Log sessions array info
+      this.logger.info(`DEBUG: Processing ${sessions.length} sessions for room ${roomId}`);
+      this.logger.info(`DEBUG: Sessions array type: ${typeof sessions}, Array: ${Array.isArray(sessions)}`);
+      
+      // Debug: Log first few sessions
+      sessions.slice(0, 3).forEach((session, index) => {
+        this.logger.info(`DEBUG: Session ${index}:`, session);
+        this.logger.info(`DEBUG: Session ${index} type: ${typeof session}, null: ${session === null}, undefined: ${session === undefined}`);
+        if (session && typeof session === 'object') {
+          this.logger.info(`DEBUG: Session ${index} keys:`, Object.keys(session));
+        }
+      });
+      
       for (const session of sessions) {
         try {
-          this.logger.sessionStart(session.title);
+          // Check if session is null or undefined
+          if (!session) {
+            this.logger.warn(`Session is null or undefined, skipping`);
+            continue;
+          }
+          
+          this.logger.sessionStart(session.title || session.sessionName || session.name || 'Unknown Session');
           
           // Transform session data
           const transformedSession = await this.validationService.transformLegacySession(session, roomId, targetEventId);
@@ -382,14 +440,17 @@ export class MigrationService {
    */
   aggregateRoomResults(roomResults, result) {
     for (const roomResult of roomResults) {
-      if (roomResult.success) {
+      if (roomResult && roomResult.success) {
         result.statistics.roomsProcessed++;
-        result.statistics.sessionsCreated += roomResult.sessionsCreated;
-        result.statistics.filesUploaded += roomResult.filesUploaded;
-        result.statistics.usersProcessed += roomResult.usersProcessed;
+        result.statistics.sessionsCreated += (roomResult.sessionsCreated || 0);
+        result.statistics.filesUploaded += (roomResult.filesUploaded || 0);
+        result.statistics.usersProcessed += (roomResult.usersProcessed || 0);
       }
       
-      result.errors.push(...roomResult.errors);
+      // Safely handle errors array
+      if (roomResult && roomResult.errors && Array.isArray(roomResult.errors)) {
+        result.errors.push(...roomResult.errors);
+      }
     }
   }
 

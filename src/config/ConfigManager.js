@@ -32,7 +32,7 @@ export class ConfigManager {
       current: {
         eventApiUrl: process.env.CURRENT_EVENT_API_URL || 'https://ss-dev.showsiteserver.com/event-api',
         filesApiUrl: process.env.CURRENT_FILES_API_URL || 'https://ss-dev.showsiteserver.com/files-api',
-        bearerToken: process.env.CURRENT_BEARER_TOKEN
+        bearerToken: process.env.CURRENT_API_TOKEN || process.env.CURRENT_BEARER_TOKEN
       },
       migration: {
         maxConcurrentRooms: parseInt(process.env.MAX_CONCURRENT_ROOMS) || 6,
@@ -218,13 +218,17 @@ export class ConfigManager {
     switch (apiType) {
       case 'legacy':
         const headers = {
-          'Authorization': `Bearer ${config.legacy.bearerToken}`,
           'x-Client': 'WebAuthToken',
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'x-isAdmin': 'true'
         };
         // Add API key if available
         if (config.legacy.apiKey) {
           headers['x-api-key'] = config.legacy.apiKey;
+        }
+        // Add Bearer token if available
+        if (config.legacy.bearerToken) {
+          headers['Authorization'] = `Bearer ${config.legacy.bearerToken}`;
         }
         return headers;
       case 'current-event':

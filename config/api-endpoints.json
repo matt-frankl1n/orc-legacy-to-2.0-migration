@@ -5,9 +5,11 @@
       "events": "/v2/events",
       "rooms": "/v2/Events/{eventName}/Rooms",
       "sessions": "/v2/Events/{eventName}/Sessions",
+      "roomSessions": "/v2/events/{eventName}/rooms/{roomId}/sessions",
       "subSessions": "/v2/Events/{eventName}/SubSessions",
       "files": "/v2/Events/{eventName}/Files",
       "users": "/v2/Events/{eventName}/Users",
+      "eventUsers": "/v2/events/{eventName}/eventusers",
       "moderators": "/v2/Events/{eventName}/Moderators",
       "roomFiles": "/v2/Events/{eventName}/Rooms/{roomName}/Files",
       "sessionFiles": "/v2/Events/{eventName}/Sessions/{sessionId}/Files"
@@ -23,10 +25,11 @@
   },
   "current": {
     "eventApi": {
-      "baseUrl": "https://ss-dev.showsiteserver.com/event-api",
+      "baseUrl": "https://ss-stage.showsiteserver.com/event-api",
       "endpoints": {
         "events": "/Events",
         "eventById": "/Events/{eventId}",
+        "eventLocations": "/Events/{eventId}/Locations",
         "rooms": "/Events/{eventId}/Rooms",
         "roomById": "/Events/{eventId}/Rooms/{roomId}",
         "sessions": "/Events/{eventId}/Sessions",
@@ -47,7 +50,7 @@
       }
     },
     "filesApi": {
-      "baseUrl": "https://ss-dev.showsiteserver.com/files-api",
+      "baseUrl": "https://ss-stage.showsiteserver.com/files-api",
       "endpoints": {
         "sessionFiles": "/SessionFiles",
         "sessionFileById": "/SessionFiles/{fileId}",
