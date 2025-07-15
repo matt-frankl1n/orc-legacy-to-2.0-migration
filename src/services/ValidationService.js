@@ -114,27 +114,29 @@ export class ValidationService {
    */
   async transformLegacySubSession(legacySubSession, sessionId, targetEventId) {
     try {
-      this.logger.debug(`Transforming legacy subsession: ${legacySubSession.title}`);
+      this.logger.info(`DEBUG: Raw legacy subsession - ID: ${legacySubSession.SubSessionId}, Name: ${legacySubSession.SubSessionName}, ClientId: ${legacySubSession.ClientSubSessionId}`);
       
       // Transform data using current system field names
       const transformedSubSession = {
         sessionId: sessionId,
         sourceSystemId: legacySubSession.ClientSubSessionId || legacySubSession.clientSubSessionId || legacySubSession.SubSessionId || legacySubSession.subSessionId || legacySubSession.id || `legacy-${Date.now()}`,
-        name: legacySubSession.subSessionName || legacySubSession.title || 'Untitled SubSession',
-        description: legacySubSession.description || null,
-        startsAt: this.transformDateTime(legacySubSession.startTime),
-        endsAt: this.transformDateTime(legacySubSession.endTime),
-        order: legacySubSession.order || legacySubSession.subSessionOrder || 1
+        name: legacySubSession.SubSessionName || legacySubSession.subSessionName || legacySubSession.title || 'Untitled SubSession',
+        description: legacySubSession.Description || legacySubSession.description || null,
+        startsAt: this.transformDateTime(legacySubSession.StartTime || legacySubSession.startTime),
+        endsAt: this.transformDateTime(legacySubSession.EndTime || legacySubSession.endTime),
+        order: legacySubSession.SubSessionOrder || legacySubSession.order || legacySubSession.subSessionOrder || 1
       };
+      
+      this.logger.info(`DEBUG: Transformed subsession before validation - sessionId: ${transformedSubSession.sessionId}, sourceSystemId: ${transformedSubSession.sourceSystemId}, name: ${transformedSubSession.name}`);
       
       // Validate transformed data
       await this.validateCurrentSystemData('subSession', 'create', transformedSubSession);
       
-      this.logger.debug(`Successfully transformed subsession: ${legacySubSession.title}`);
+      this.logger.info(`DEBUG: Transformed subsession after validation - sessionId: ${transformedSubSession.sessionId}, sourceSystemId: ${transformedSubSession.sourceSystemId}, name: ${transformedSubSession.name}`);
       return transformedSubSession;
       
     } catch (error) {
-      this.logger.error(`Failed to transform legacy subsession: ${legacySubSession.title}`, error);
+      this.logger.error(`Failed to transform legacy subsession: ${legacySubSession.SubSessionName || legacySubSession.title}`, error);
       throw new Error(`SubSession transformation failed: ${error.message}`);
     }
   }

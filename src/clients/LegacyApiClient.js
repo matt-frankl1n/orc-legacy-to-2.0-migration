@@ -336,20 +336,70 @@ export class LegacyApiClient {
     try {
       this.logger.info(`Fetching files for event: ${eventName}${roomName ? `, room: ${roomName}` : ''}`);
       
-      let files;
+      let files = [];
       
-      if (roomName) {
-        // Get room-specific files
-        files = await this.get('roomFiles', { eventName, roomName });
-      } else {
-        // Get all event files
-        files = await this.get('files', { eventName });
+      try {
+        if (roomName) {
+          // Try room-specific files first
+          files = await this.get('roomFiles', { eventName, roomName });
+        } else {
+          // Try general event files
+          files = await this.get('files', { eventName });
+        }
+      } catch (error) {
+        // If 405 Method Not Allowed, try alternative endpoints
+        if (error.message.includes('405')) {
+          this.logger.warn(`File endpoint not available (405), trying alternative approach...`);
+          
+          // Try to get files from sessions instead
+          try {
+            const sessions = await this.getSessions(eventName);
+            const sessionFiles = [];
+            
+            for (const session of sessions) {
+              // Check if session has WalkInFile
+              if (session.WalkInFile && !session.WalkInFile.IsDeleted) {
+                sessionFiles.push({
+                  ...session.WalkInFile,
+                  fileType: 'walkin',
+                  sessionId: session.SessionId,
+                  sessionName: session.SessionName
+                });
+              }
+              
+              // Check if session has presentation files in subsessions
+              if (session.SubSessions) {
+                for (const subSession of session.SubSessions) {
+                  if (subSession.PresentationFiles && subSession.PresentationFiles.length > 0) {
+                    sessionFiles.push(...subSession.PresentationFiles.map(file => ({
+                      ...file,
+                      fileType: 'presentation',
+                      sessionId: session.SessionId,
+                      subSessionId: subSession.SubSessionId,
+                      sessionName: session.SessionName,
+                      subSessionName: subSession.SubSessionName
+                    })));
+                  }
+                }
+              }
+            }
+            
+            files = sessionFiles;
+            this.logger.info(`✅ Retrieved ${files.length} files from session data`);
+          } catch (sessionError) {
+            this.logger.warn(`Could not retrieve files from sessions: ${sessionError.message}`);
+            files = [];
+          }
+        } else {
+          throw error;
+        }
       }
       
       return files;
     } catch (error) {
       this.logger.error(`Failed to fetch files for event ${eventName}:`, error);
-      throw error;
+      // Return empty array instead of throwing to allow migration to continue
+      return [];
     }
   }
 
@@ -369,12 +419,21 @@ export class LegacyApiClient {
   /**
    * Download file from legacy system
    */
-  async downloadFile(eventName, fileId, filePath) {
+  async downloadFile(eventName, fileId, filePath, subSessionId = null) {
     try {
-      this.logger.info(`Downloading file: ${fileId} from event: ${eventName}`);
+      // Validate required parameters
+      if (!eventName || !fileId) {
+        throw new Error(`Missing required parameters: eventName=${eventName}, fileId=${fileId}`);
+      }
       
+      this.logger.info(`Downloading file: ${fileId} from event: ${eventName}${subSessionId ? `, subsession: ${subSessionId}` : ''}`);
+      
+      // Use the original download endpoint pattern
       const url = `/v2/Events/${eventName}/Files/${fileId}/download?apiKey=${this.config.legacy.apiKey}`;
-      const headers = { 'x-eventName': eventName };
+      const headers = { 
+        'x-eventName': eventName,
+        'x-isAdmin': false
+      };
       
       const response = await this.httpClient.get(url, { 
         headers,

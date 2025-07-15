@@ -204,9 +204,9 @@ export class MigrationService {
       // Step 1: Transform and validate room data
       const transformedRoom = await this.validationService.transformLegacyRoom(room, targetEventId, eventLocationId);
       
-      // Step 2: Create room in current system
-      const createdRoom = await this.currentClient.createRoom(transformedRoom);
-      if (verbose) this.logger.info(`✅ Room "${roomName}" created with ID: ${createdRoom.id}`);
+      // Step 2: Create or update room in current system
+      const createdRoom = await this.currentClient.createOrUpdateRoom(transformedRoom);
+      if (verbose) this.logger.info(`✅ Room "${roomName}" processed with ID: ${createdRoom.id}`);
       
       // Step 3: Fetch and process sessions
       const sessions = await this.legacyClient.getSessions(legacyEventName, room.RoomId);
@@ -226,11 +226,25 @@ export class MigrationService {
       
       // Step 5: Process files if not skipped
       if (!skipFiles) {
-        const files = await this.legacyClient.getFiles(legacyEventName, roomName);
-        if (files.length > 0) {
-          const fileResults = await this.processFiles(files, createdRoom.id, targetEventId, options);
-          roomResult.filesUploaded = fileResults.uploaded;
-          roomResult.errors.push(...fileResults.errors);
+        try {
+          const files = await this.legacyClient.getFiles(legacyEventName, roomName);
+          if (files && files.length > 0) {
+            const fileResults = await this.processFiles(files, createdRoom.id, targetEventId, { 
+              ...options, 
+              legacyEventName 
+            });
+            roomResult.filesUploaded = fileResults.uploaded;
+            roomResult.errors.push(...fileResults.errors);
+          } else {
+            this.logger.info(`No files found for room: ${roomName}`);
+          }
+        } catch (fileError) {
+          this.logger.warn(`File processing failed for room ${roomName}: ${fileError.message}`);
+          roomResult.errors.push({
+            context: `File processing: ${roomName}`,
+            error: fileError.message,
+            severity: 'warning'
+          });
         }
       }
       
@@ -279,32 +293,36 @@ export class MigrationService {
             continue;
           }
           
-          this.logger.sessionStart(session.title || session.sessionName || session.name || 'Unknown Session');
+          const sessionTitle = session.title || session.SessionName || session.sessionName || session.name || 'Unknown Session';
+          this.logger.sessionStart(sessionTitle);
           
           // Transform session data
           const transformedSession = await this.validationService.transformLegacySession(session, roomId, targetEventId);
           
-          // Create session in current system
-          const createdSession = await this.currentClient.createSession(transformedSession);
+          // Create or update session in current system (handles conflicts)
+          const createdSession = await this.currentClient.createOrUpdateSession(transformedSession);
           result.created++;
           
-          if (verbose) this.logger.info(`✅ Session "${session.title}" created with ID: ${createdSession.id}`);
+          if (verbose) this.logger.info(`✅ Session "${sessionTitle}" processed with ID: ${createdSession.id}`);
           
           // Process subsessions if they exist
-          if (session.subSessions && session.subSessions.length > 0) {
+          if (session.SubSessions && session.SubSessions.length > 0) {
+            await this.processSubSessions(session.SubSessions, createdSession.id, targetEventId, options);
+          } else if (session.subSessions && session.subSessions.length > 0) {
             await this.processSubSessions(session.subSessions, createdSession.id, targetEventId, options);
           }
           
-          this.logger.sessionEnd(session.title, true, 0);
+          this.logger.sessionEnd(sessionTitle, true, 0);
           
         } catch (error) {
+          const sessionTitle = session?.title || session?.SessionName || session?.sessionName || session?.name || 'Unknown Session';
           result.errors.push({
-            context: `Session processing: ${session.title}`,
+            context: `Session processing: ${sessionTitle}`,
             error: error.message,
             stack: error.stack
           });
           
-          this.logger.sessionEnd(session.title, false, 0);
+          this.logger.sessionEnd(sessionTitle, false, 0);
         }
       }
     } catch (error) {
@@ -324,18 +342,27 @@ export class MigrationService {
   async processSubSessions(subSessions, sessionId, targetEventId, options = {}) {
     const { verbose } = options;
     
+    this.logger.info(`DEBUG: Processing ${subSessions.length} subsessions for session ${sessionId}`);
+    
     for (const subSession of subSessions) {
       try {
+        const subSessionTitle = subSession.title || subSession.SubSessionName || subSession.subSessionName || subSession.name || 'Unknown SubSession';
+        
+        this.logger.info(`DEBUG: Current subsession - ID: ${subSession.SubSessionId}, Name: ${subSession.SubSessionName}, ClientId: ${subSession.ClientSubSessionId}`);
+        
         // Transform subsession data
         const transformedSubSession = await this.validationService.transformLegacySubSession(subSession, sessionId, targetEventId);
         
-        // Create subsession in current system
-        const createdSubSession = await this.currentClient.createSubSession(transformedSubSession);
+        this.logger.info(`DEBUG: Transformed subsession data - sessionId: ${transformedSubSession.sessionId}, sourceSystemId: ${transformedSubSession.sourceSystemId}, name: ${transformedSubSession.name}`);
         
-        if (verbose) this.logger.info(`✅ SubSession "${subSession.title}" created with ID: ${createdSubSession.id}`);
+        // Create or update subsession in current system (handles conflicts)
+        const createdSubSession = await this.currentClient.createOrUpdateSubSession(transformedSubSession, targetEventId);
+        
+        if (verbose) this.logger.info(`✅ SubSession "${subSessionTitle}" processed with ID: ${createdSubSession.id}`);
         
       } catch (error) {
-        this.logger.error(`Failed to process subsession "${subSession.title}":`, error);
+        const subSessionTitle = subSession?.title || subSession?.SubSessionName || subSession?.subSessionName || subSession?.name || 'Unknown SubSession';
+        this.logger.error(`Failed to process subsession "${subSessionTitle}":`, error);
       }
     }
   }
@@ -394,16 +421,39 @@ export class MigrationService {
    * Process files for a room
    */
   async processFiles(files, roomId, targetEventId, options = {}) {
-    const { verbose } = options;
+    const { verbose, legacyEventName } = options;
     const result = { uploaded: 0, errors: [] };
     
     try {
       for (const file of files) {
         try {
-          this.logger.fileOperation('processing', file.fileName);
+          const fileName = file.FileName || file.fileName || 'Unknown File';
+          const fileId = file.WalkInFileId || file.FileId || file.id;
+          const subSessionId = file.subSessionId || file.SubSessionId;
+          
+          this.logger.info(`📄 File processing ${JSON.stringify({
+            fileName,
+            fileId,
+            subSessionId,
+            size: file.FileSize || file.fileSize
+          })}`);
+          
+          // Skip files without proper IDs
+          if (!fileId) {
+            this.logger.warn(`⚠️  Skipping file ${fileName} - missing file ID`);
+            continue;
+          }
+          
+          // Skip files without event name
+          if (!legacyEventName) {
+            this.logger.warn(`⚠️  Skipping file ${fileName} - missing legacy event name`);
+            continue;
+          }
+          
+          this.logger.info(`Downloading file: ${fileName} (ID: ${fileId}) from event: ${legacyEventName}${subSessionId ? `, subsession: ${subSessionId}` : ''}`);
           
           // Download file from legacy system
-          const fileData = await this.legacyClient.downloadFile(file.downloadUrl);
+          const fileData = await this.legacyClient.downloadFile(legacyEventName, fileId, file.FilePath, subSessionId);
           
           // Transform file metadata
           const transformedFile = await this.validationService.transformLegacyFile(file, roomId, targetEventId);
@@ -412,16 +462,17 @@ export class MigrationService {
           const uploadResult = await this.fileService.uploadFile(fileData, transformedFile);
           result.uploaded++;
           
-          if (verbose) this.logger.info(`✅ File "${file.fileName}" uploaded with ID: ${uploadResult.id}`);
+          if (verbose) this.logger.info(`✅ File "${fileName}" uploaded with ID: ${uploadResult.id}`);
           
         } catch (error) {
+          const fileName = file.FileName || file.fileName || 'Unknown File';
           result.errors.push({
-            context: `File processing: ${file.fileName}`,
+            context: `File processing: ${fileName}`,
             error: error.message,
             stack: error.stack
           });
           
-          this.logger.fileError('processing', file.fileName, error);
+          this.logger.error(`📄 File processing failed`, { error: error.message, stack: error.stack });
         }
       }
     } catch (error) {
